@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  tailscale:
+    image: tailscale/tailscale:latest
+    hostname: webhook-validator
+    container_name: webhook-validator-tailscale
+    environment:
+      - TS_AUTHKEY=${TS_AUTHKEY}
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=true
+      - TS_ACCEPT_DNS=false
+    volumes:
+      - tailscale-state:/var/lib/tailscale
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    restart: unless-stopped
+    networks:
+      - webhook-net
+
+  validator:
+    build:
+      context: ../..
+      dockerfile: packages/validator/Dockerfile
+    container_name: webhook-validator
+    environment:
+      - PORT=3000
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+      - FORWARD_URL=${FORWARD_URL:-http://100.99.47.83:9010/webhook}
+    network_mode: service:tailscale
+    depends_on:
+      - tailscale
+    restart: unless-stopped
+
+volumes:
+  tailscale-state:
+
+networks:
+  webhook-net:
+    driver: bridge
