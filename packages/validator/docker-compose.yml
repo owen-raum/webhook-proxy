@@ -21,9 +21,7 @@ services:
       - webhook-net
 
   validator:
-    build:
-      context: ../..
-      dockerfile: packages/validator/Dockerfile
+    image: ghcr.io/owen-raum/webhook-proxy-validator:latest
     container_name: webhook-validator
     environment:
       - PORT=3000
