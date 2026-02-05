@@ -1,5 +1,5 @@
 export interface WebhookPayload {
-  provider: 'stripe' | 'github' | 'unknown';
+  provider: 'stripe' | 'github' | 'generic' | 'unknown';
   event: string;
   data: any;
   rawBody?: string;
