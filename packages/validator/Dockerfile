@@ -12,7 +12,6 @@ ENV CI=true
 RUN pnpm install --frozen-lockfile
 RUN pnpm --filter @webhook-proxy/shared build
 RUN pnpm --filter @webhook-proxy/validator build
-RUN pnpm prune --prod
 
 FROM node:20-alpine AS runtime
 
