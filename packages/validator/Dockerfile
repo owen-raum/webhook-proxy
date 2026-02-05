@@ -1,26 +1,26 @@
-FROM node:20-alpine
+FROM node:20-alpine AS builder
 
-# Install pnpm
 RUN npm install -g pnpm
 
 WORKDIR /app
 
-# Copy workspace files
-COPY package.json pnpm-workspace.yaml ./
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY packages/shared ./packages/shared
 COPY packages/validator ./packages/validator
 
-# Install dependencies
 RUN pnpm install --frozen-lockfile
-
-# Build shared types
 RUN pnpm --filter @webhook-proxy/shared build
-
-# Build validator
 RUN pnpm --filter @webhook-proxy/validator build
+RUN pnpm prune --prod
+
+FROM node:20-alpine AS runtime
+
+WORKDIR /app
+
+COPY --from=builder /app /app
 
 WORKDIR /app/packages/validator
 
 EXPOSE 3000
 
-CMD ["pnpm", "start"]
+CMD ["node", "dist/index.js"]
