@@ -102,6 +102,46 @@ app.post('/stripe', express.raw({ type: 'application/json' }), async (req, res) 
   }
 });
 
+// Generic webhook endpoint (no validation, just forward)
+app.post('/webhook', express.json(), async (req, res) => {
+  console.log(`📦 Generic webhook received`);
+
+  const payload: WebhookPayload = {
+    provider: 'generic',
+    event: req.headers['x-webhook-event'] as string || 'unknown',
+    data: req.body,
+    timestamp: Date.now(),
+  };
+
+  // Forward to receiver
+  try {
+    const response = await fetch(FORWARD_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Internal-Key': INTERNAL_API_KEY,
+      },
+      body: JSON.stringify({ payload }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Receiver responded with ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log(`✅ Forwarded generic webhook`, result);
+    
+    res.json({ received: true, forwarded: true });
+  } catch (err: any) {
+    console.error(`❌ Failed to forward webhook: ${err.message}`);
+    res.status(500).json({ 
+      received: true, 
+      forwarded: false,
+      error: err.message 
+    });
+  }
+});
+
 // GitHub webhook endpoint (optional)
 app.post('/github', express.json(), async (req, res) => {
   const event = req.headers['x-github-event'] as string || 'unknown';
