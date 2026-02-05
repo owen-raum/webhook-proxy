@@ -8,6 +8,7 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.json ./
 COPY packages/shared ./packages/shared
 COPY packages/validator ./packages/validator
 
+ENV CI=true
 RUN pnpm install --frozen-lockfile
 RUN pnpm --filter @webhook-proxy/shared build
 RUN pnpm --filter @webhook-proxy/validator build
